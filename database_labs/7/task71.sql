@@ -2,40 +2,41 @@
 -- Напишите запрос по варианту
 -- Напишите скрипт, выводящий количество всех оценок 5, 4, 3, 2 в единой таблице
 
-do 
-$$
-DECLARE
-    grade CHAR(1);
-BEGIN
-    FOR grade IN ('5', '4', '3', '2') LOOP
-        RAISE NOTICE 'Grade %: %', grade, (
-            SELECT COUNT(*) FROM field_comprehension WHERE mark = grade
-        );
-    END LOOP;
-END 
-$$;
 
+-- запрос, который выводит таблицу с оценками и их количеством
+SELECT mark, COUNT(mark) 
+FROM field_comprehension 
+GROUP BY mark
+
+-- скрипт, который выводит оценку и количество
 do
 $$
 DECLARE 
-	students record;
-	studentid constant INTEGER := 838389;
+	mark_count record;
 BEGIN
-	SELECT surname, name 
-	INTO students
-	FROM student
-	WHERE student_id = studentid;
-	raise notice 'Имя: %, Фамилия: %', students.name, students.surname; 
+   for i in REVERSE 5..2 loop
+        select mark, count(*) into mark_count
+        from field_comprehension
+        group by mark
+        having mark = i;
+
+        raise notice 'Оценка, Кол-во: %', mark_count;
+   end loop;
 END
 $$;
 
-DO $$
-DECLARE
-    grade CHAR(1);
-    grade_count INT;
+-- второй вариант скрипта с использованием курсора
+do
+$$
+DECLARE 
+	mark_count record;
 BEGIN
-    FOR grade IN ('5', '4', '3', '2') LOOP
-        EXECUTE format('SELECT COUNT(*) FROM field_comprehension WHERE mark = %L', grade) INTO grade_count;
-        RAISE NOTICE 'Grade %: %', grade, grade_count;
-    END LOOP;
-END $$;
+   for mark_count in  
+        select mark, count(mark)
+        from field_comprehension
+        group by mark
+		loop
+        raise notice 'Оценка, Кол-во: %', mark_count;
+   end loop;
+END
+$$;
